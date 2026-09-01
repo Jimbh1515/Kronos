@@ -5,3 +5,19 @@ numpy>=1.26.0
 plotly==5.17.0
 torch>=2.1.0
 huggingface_hub==0.33.1
+
+# Required by model/ (the actual Kronos model code) — present in the repo's root
+# requirements.txt but missing here, which is why "Load Model" silently failed
+# with no models listed after a webui-only install (e.g. on Render)
+einops==0.8.1
+tqdm==4.67.1
+safetensors==0.6.2
+
+# Financial analyst platform additions
+scipy>=1.11.0
+yfinance>=0.2.40
+gunicorn>=21.2.0
+
+# Optional: enables the China A-share live data source (Screener/TA/Backtest/Risk
+# tabs still work without it for local files and yfinance-backed symbols)
+# akshare>=1.14.0

@@ -214,6 +214,23 @@ Running this script will generate a plot comparing the ground truth data against
 Additionally, we provide a script that makes predictions without Volume and Amount data, which can be found in [`examples/prediction_wo_vol_example.py`](examples/prediction_wo_vol_example.py).
 
 
+## 💼 Financial Analyst Platform (Web UI)
+
+Beyond the model itself, this repo ships a full browser-based analyst platform in
+[`webui/`](webui/) built around Kronos's forecasts: technical analysis with 20 common
+indicators, a strategy backtester, risk analytics (Sharpe/Sortino/VaR/drawdown/correlation),
+an options pricer with Greeks and payoff diagrams, and a multi-symbol screener with saved
+watchlists — pulling live data via `yfinance` or `akshare`, or your own local CSV/feather files.
+
+```shell
+cd webui
+pip install -r requirements.txt
+python app.py
+```
+
+Then visit `http://localhost:7070`. See [`webui/README.md`](webui/README.md) for the full
+feature list and REST API reference.
+
 ## 🔧 Finetuning on Your Own Data (A-Share Market Example)
 
 We provide a complete pipeline for finetuning Kronos on your own datasets. As an example, we demonstrate how to use [Qlib](https://github.com/microsoft/qlib) to prepare data from the Chinese A-share market and conduct a simple backtest.

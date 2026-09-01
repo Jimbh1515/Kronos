@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: kronos-financial-analyst-platform
+    runtime: python
+    rootDir: webui
+    plan: free
+    buildCommand: "pip install torch --index-url https://download.pytorch.org/whl/cpu && pip install -r requirements.txt"
+    startCommand: "gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 180"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9

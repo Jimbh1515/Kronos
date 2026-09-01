@@ -1,4 +1,12 @@
 import os
+
+# Constrain PyTorch's threading before it (or anything that imports it, like
+# `model`) is imported, to reduce per-thread buffer memory overhead — helps
+# peak RSS on memory-constrained deployments (e.g. a free-tier host).
+os.environ.setdefault('OMP_NUM_THREADS', '1')
+os.environ.setdefault('MKL_NUM_THREADS', '1')
+
+import gc
 import pandas as pd
 import numpy as np
 import json
@@ -15,14 +23,27 @@ warnings.filterwarnings('ignore')
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
+    import torch
     from model import Kronos, KronosTokenizer, KronosPredictor
     MODEL_AVAILABLE = True
+    # This app only ever runs inference, never training — disabling autograd
+    # globally (on top of the no_grad() already used inside the model's own
+    # generation loop) and pinning to a single thread trims memory overhead
+    # that otherwise adds up on a memory-constrained deployment.
+    torch.set_num_threads(1)
+    torch.set_grad_enabled(False)
 except ImportError:
     MODEL_AVAILABLE = False
     print("Warning: Kronos model cannot be imported, will use simulated data for demonstration")
 
 app = Flask(__name__)
 CORS(app)
+
+# Financial analyst platform additions: live data, technical analysis, risk,
+# backtesting, options analytics, and the screener/watchlist API. Registered
+# here (rather than merged into this file) so the original Kronos prediction
+# routes above/below stay untouched.
+import api_extra  # noqa: E402
 
 # Global variables to store models
 tokenizer = None
@@ -609,7 +630,15 @@ def predict():
             )
         except Exception as e:
             print(f"Failed to save prediction results: {e}")
-        
+
+        # Free the large intermediates (raw df, model input/output DataFrames)
+        # now that only the small JSON-serializable results are still needed —
+        # helps peak RSS on memory-constrained deployments.
+        del df, x_df, pred_df
+        if actual_df is not None:
+            del actual_df
+        gc.collect()
+
         return jsonify({
             'success': True,
             'prediction_type': prediction_type,
@@ -619,7 +648,7 @@ def predict():
             'has_comparison': len(actual_data) > 0,
             'message': f'Prediction completed, generated {pred_len} prediction points' + (f', including {len(actual_data)} actual data points for comparison' if len(actual_data) > 0 else '')
         })
-        
+
     except Exception as e:
         return jsonify({'error': f'Prediction failed: {str(e)}'}), 500
 
@@ -696,6 +725,8 @@ def get_model_status():
             'loaded': False,
             'message': 'Kronos model library not available, please install related dependencies'
         })
+
+api_extra.register_routes(app, load_data_file)
 
 if __name__ == '__main__':
     print("Starting Kronos Web UI...")
