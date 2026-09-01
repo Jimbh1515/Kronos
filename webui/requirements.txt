@@ -9,6 +9,7 @@ huggingface_hub==0.33.1
 # Financial analyst platform additions
 scipy>=1.11.0
 yfinance>=0.2.40
+gunicorn>=21.2.0
 
 # Optional: enables the China A-share live data source (Screener/TA/Backtest/Risk
 # tabs still work without it for local files and yfinance-backed symbols)

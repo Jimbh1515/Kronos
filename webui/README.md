@@ -75,6 +75,29 @@ python app.py
 
 After successful startup, visit http://localhost:7070
 
+### ☁️ One-Click Deploy to Render
+
+The repo includes a Render Blueprint (`render.yaml`) that builds `webui/` as a web service with
+a CPU-only PyTorch wheel (much smaller/faster than the default GPU-bundled wheel) and serves it
+with `gunicorn`.
+
+1. Click **[Deploy to Render](https://render.com/deploy?repo=https://github.com/Jimbh1515/Kronos)**.
+2. When Render's setup wizard asks for a branch, pick `claude/financial-analyst-platform-7pjlov`
+   (or `master` once the PR is merged).
+3. Click **Apply** — Render will build and give you a public `https://<your-service>.onrender.com` URL.
+
+**Notes:**
+- The free instance type has 512MB RAM. `torch` + Flask + pandas + scipy already use a meaningful
+  chunk of that at idle, so loading a Kronos model (the Prediction tab) may be tight — **Kronos-mini**
+  (4.1M params) is the most likely to fit; Kronos-small/base may need a paid instance type with more RAM.
+- The Technical Analysis / Backtest / Risk / Options / Screener tabs don't load the model at all and
+  should run fine on the free tier.
+- The free tier spins down after 15 minutes idle and cold-starts on the next request (10–30s delay).
+- If the Blueprint's fields have drifted from Render's current schema, create the service manually
+  instead: **New + → Web Service → connect this repo**, root directory `webui`, build command
+  `pip install torch --index-url https://download.pytorch.org/whl/cpu && pip install -r requirements.txt`,
+  start command `gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 180`.
+
 ## 📋 Usage Steps
 
 1. **Load data**: Select financial data file from data directory
