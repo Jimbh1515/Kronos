@@ -1,9 +1,12 @@
-# Kronos Web UI
+# Kronos Financial Analyst Platform
 
-Web user interface for Kronos financial prediction model, providing intuitive graphical operation interface.
+Web user interface built around the Kronos financial prediction model, extended into a full
+technical-analysis / risk / backtesting / options / screening platform — everything a discretionary
+or systematic analyst needs in one app, on top of Kronos's own K-line forecasting.
 
 ## ✨ Features
 
+### 🔮 Prediction (original Kronos functionality — unchanged)
 - **Multi-format data support**: Supports CSV, Feather and other financial data formats
 - **Smart time window**: Fixed 400+120 data point time window slider selection
 - **Real model prediction**: Integrated real Kronos model, supports multiple model sizes
@@ -11,6 +14,43 @@ Web user interface for Kronos financial prediction model, providing intuitive gr
 - **Multi-device support**: Supports CPU, CUDA, MPS and other computing devices
 - **Comparison analysis**: Detailed comparison between prediction results and actual data
 - **K-line chart display**: Professional financial K-line chart display
+
+### 📊 Technical Analysis
+Interactive candlestick charting with 20 indicators computed from a pure pandas/numpy library
+(`webui/analytics/indicators.py`, no compiled TA-Lib dependency): SMA, EMA, WMA, Bollinger Bands,
+Keltner Channels, Donchian Channels, VWAP, Ichimoku Cloud, Parabolic SAR, RSI, MACD, Stochastic,
+ROC, Williams %R, CCI, MFI, ATR, ADX/DI, OBV, Accumulation/Distribution, and historical volatility —
+plus classic floor-trader pivot points and Fibonacci retracement levels. Overlays render on the price
+panel; oscillators get their own stacked, x-axis-synced panel below.
+
+### 🔍 Screener & Watchlists
+Scan any list of symbols concurrently (via yfinance or akshare) for trend/RSI/MACD signals and a
+composite score; save/load/edit named watchlists (persisted to `webui/storage/watchlists.json`).
+
+### 💰 Backtest
+Vectorized, look-ahead-bias-free backtesting engine (`webui/analytics/backtest.py`) with six built-in
+rule-based strategies — SMA crossover, EMA crossover, RSI mean reversion, MACD crossover, Bollinger
+Band reversion, Donchian breakout — configurable parameters, transaction costs, optional shorting, an
+equity curve vs. buy-and-hold, a full trade log, and performance stats (CAGR, Sharpe/Sortino/Calmar,
+max drawdown, win rate, profit factor, exposure).
+
+### ⚠️ Risk Analytics
+Single-asset risk reports (annualized return/volatility, Sharpe, Sortino, Calmar, max drawdown with
+peak/trough/recovery dates, historical & parametric VaR, CVaR/Expected Shortfall, skewness, kurtosis,
+beta vs. a benchmark) plus a drawdown chart, rolling volatility chart, and a multi-symbol return
+correlation heatmap.
+
+### 🎯 Options
+Black-Scholes pricing with continuous dividend yield, all five Greeks (delta, gamma, vega, theta,
+rho), a Newton-Raphson (with bisection fallback) implied-volatility solver, and payoff/breakeven
+diagrams for common strategies (long call/put, covered call, protective put, straddle) plus live
+option-chain lookups where the underlying is available on Yahoo Finance.
+
+### 🌐 Live Market Data
+The Technical Analysis, Screener, Backtest, and Risk tabs all accept either a local file (the
+original workflow) or a live symbol — via `yfinance` (US/global equities, ETFs, crypto pairs like
+`BTC-USD`, FX) or `akshare` (Chinese A-shares, matching the data source already used by the scripts
+under `examples/`).
 
 ## 🚀 Quick Start
 
@@ -100,12 +140,45 @@ The system automatically provides comparison analysis between prediction results
 - Error analysis
 - Prediction quality assessment
 
+## 🌐 REST API Reference (new in this platform)
+
+All endpoints accept/return JSON. Every analytics endpoint (`/api/indicators`, `/api/risk`,
+`/api/backtest`, `/api/screener/scan`) resolves its price data the same way: pass either
+`{"file_path": "..."}` for a local file, or `{"source": "yfinance"|"akshare", "symbol": "...",
+"period": "6mo", "interval": "1d"}` for a live pull.
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/data-sources-status` | GET | Which of yfinance/akshare are installed |
+| `/api/symbol-search` | POST | Ticker/name search (yfinance-backed) |
+| `/api/market-data` | POST | Fetch raw OHLCV candles |
+| `/api/indicators/list` | GET | Available indicators + default params |
+| `/api/indicators` | POST | Compute one or more indicators over a symbol/file |
+| `/api/risk` | POST | Full risk summary + drawdown/rolling-vol series |
+| `/api/risk/correlation` | POST | Return-correlation matrix across symbols |
+| `/api/backtest/strategies` | GET | Available strategies + default params |
+| `/api/backtest` | POST | Run a backtest, get stats/equity curve/trade log |
+| `/api/options/analyze` | POST | Black-Scholes price + Greeks |
+| `/api/options/implied-vol` | POST | Solve implied volatility from a market price |
+| `/api/options/payoff` | POST | Strategy payoff diagram at expiry |
+| `/api/options/chain` | POST | Live option chain (yfinance) |
+| `/api/screener/scan` | POST | Scan a symbol list for signals |
+| `/api/watchlists` | GET/POST | List / create-or-update watchlists |
+| `/api/watchlists/<name>` | DELETE | Delete a watchlist |
+| `/api/watchlists/<name>/symbols` | POST | Add a symbol to a watchlist |
+| `/api/watchlists/<name>/symbols/<symbol>` | DELETE | Remove a symbol from a watchlist |
+
 ## 🛠️ Technical Architecture
 
-- **Backend**: Flask + Python
-- **Frontend**: HTML + CSS + JavaScript
+- **Backend**: Flask + Python (`app.py` for the original Kronos prediction routes,
+  `api_extra.py` for the new analytics/data/screener/options routes)
+- **Analytics**: `analytics/indicators.py`, `analytics/risk.py`, `analytics/backtest.py`,
+  `analytics/options.py`, `analytics/screener.py` — pure pandas/numpy/scipy, no compiled
+  TA-Lib dependency
+- **Live data**: `data_sources.py` (yfinance + optional akshare)
+- **Frontend**: HTML + CSS + JavaScript, tabbed single-page layout
 - **Charts**: Plotly.js
-- **Data processing**: Pandas + NumPy
+- **Data processing**: Pandas + NumPy + SciPy
 - **Model**: Hugging Face Transformers
 
 ## 📝 Troubleshooting

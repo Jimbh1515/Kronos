@@ -24,6 +24,12 @@ except ImportError:
 app = Flask(__name__)
 CORS(app)
 
+# Financial analyst platform additions: live data, technical analysis, risk,
+# backtesting, options analytics, and the screener/watchlist API. Registered
+# here (rather than merged into this file) so the original Kronos prediction
+# routes above/below stay untouched.
+import api_extra  # noqa: E402
+
 # Global variables to store models
 tokenizer = None
 model = None
@@ -696,6 +702,8 @@ def get_model_status():
             'loaded': False,
             'message': 'Kronos model library not available, please install related dependencies'
         })
+
+api_extra.register_routes(app, load_data_file)
 
 if __name__ == '__main__':
     print("Starting Kronos Web UI...")

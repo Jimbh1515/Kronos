@@ -5,3 +5,11 @@ numpy>=1.26.0
 plotly==5.17.0
 torch>=2.1.0
 huggingface_hub==0.33.1
+
+# Financial analyst platform additions
+scipy>=1.11.0
+yfinance>=0.2.40
+
+# Optional: enables the China A-share live data source (Screener/TA/Backtest/Risk
+# tabs still work without it for local files and yfinance-backed symbols)
+# akshare>=1.14.0
